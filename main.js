@@ -36,20 +36,20 @@ const messageInput = document.getElementById("message")
 const chatBox = document.getElementById("chat-box")
 
 //fitur kirim pesan
-chatForm.addEventListener("submit", async (event) =>{
+chatForm.addEventListener("submit", async (event) => {
   event.preventDefault()
   
   const username = usernameInput.value.trim()
   const message = messageInput.value.trim()
   
-  if(username && message){
+  if (username && message){
     //kirim ke firestore
     try {
-      await addDoc(messageCollection), {
+      await addDoc(messageCollection, {
         username: username, 
         message: message, 
         waktu: serverTimestamp()
-      }
+      })
       //bersihkan inout setelah mengirim pesan
       messageInput.value =""
     } catch (error) {
@@ -57,3 +57,47 @@ chatForm.addEventListener("submit", async (event) =>{
     }
   }
 }) 
+
+//Fitur Pesan Linstener (Realime)
+const queryPesan = query(messageCollection, orderBy("waktu","asc")) 
+
+onSnapshot(queryPesan, (snapshot) => {
+  //bersihkan chatBox sebelum menampilkan pesan baru
+  chatBox.innerHTML = ""
+  //tampilkan pesan baru di chatBox
+  snapshot.forEach((doc)=> {
+    
+    //ambil data dari document
+    const data = doc.data()
+    
+    //membuat tampilan waktu
+    const waktu = data.waktu.toDate().toLocaleTimeString([], 
+      {hour: '2-digit', minute: '2-digit'}
+    )
+    
+    //render pesan (memanggil fungsi renderPesan)
+    renderPesan(data.username,data.message, waktu)
+  }) 
+}) 
+
+function renderPesan(username, message, waktu){
+  //membuat elemen untuk menampilkan pesan
+  const messageDiv = document.createElement("div")
+  
+  //mmenambak nama class meesseg-card ke elemen messageDiv
+  messageDiv.classList.add("message-card")
+  
+  //menambahkan konten pesan ke messageDiv
+  messageDiv.innerHTML = `
+  
+  <div class="message-content">
+     <strong>${username}</strong>
+     <span>${message}</span>
+  </div>
+  <span class="time“>${waktu}</span>
+  `//backtick
+  
+  //menambahkan messageDiv ke chatBox
+  chatBox.appendChild(messageDiv)
+  
+}
