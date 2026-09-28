@@ -33,6 +33,9 @@ const messagesCollection = collection(db, "messages")
 function ambilAtauBuatIdBrowser() {
     // buat satu variabel utk menyimpan browser id
     let idBrowser = localStorage.getItem("livechatpunyaku123")
+    
+        // Siapkan suara notifikasi
+    const suaraPostinganBaru = new Audio("noti.mp3")
 
     // periksa isi variabel browser id
     // jika variabel tersebut tidak ada isinya
@@ -209,12 +212,13 @@ chatForm.addEventListener("submit", async (event) => {
             console.log("Gagal mengirim pesan:", error)
         }
     }
+    
 })
 
 // Fitur Pesan Listener (Realtime)
 const queryPesan = query(messagesCollection, orderBy("waktu", "asc"))
 
-onSnapshot(queryPesan, (cuplikan) => {
+ onSnapshot(queryPesan, (cuplikan) => {
     // Bersihkan chatBox sebelum menampilkan pesan baru
     chatBox.innerHTML = ""
 
@@ -285,4 +289,24 @@ function stringToColor(str) {
     // Ambil nilai Hue 0 - 360, dengan saturation 65% & Lightness 40% agar warna tetap kontras/jelas
     const hue = Math.abs(hash) % 360
     return `hsl(${hue}, 65%, 40%)`
+}
+
+function tampilNotifikasi(pesan) {
+    // Hapus notifikasi lama
+    const lama = document.querySelector(".notifikasi-chat")
+    if (lama) lama.remove()
+
+    const notif = document.createElement("div")
+    notif.className = "notifikasi-chat"
+
+    notif.innerHTML = `
+        <strong>💬 Pesan Baru</strong>
+        <div>${pesan}</div>
+    `
+
+    document.body.appendChild(notif)
+
+    setTimeout(() => {
+        notif.remove()
+    }, 3000)
 }
