@@ -166,8 +166,9 @@ async function kirimStiker(url) {
   pemilihStiker.classList.add("tersembunyi")
   // mengirim ke firestore
   try {
-    await addDoc(messagesCollection, {
+    await addDoc(messageCollection, {
       username: username,
+      idBrowser: idBrowserSekarang, 
       message: url,
       waktu: serverTimestamp(),
       tipe: "stiker"
@@ -181,7 +182,10 @@ async function kirimStiker(url) {
 chatForm.addEventListener("submit", async (event) => {
   event.preventDefault()
   
-  const username = usernameInput.value.trim()
+  const username = dapatkanDanKunciUsername()
+  
+  //jangan kirim pesan kalau username kosong
+  if (!username) return
   const message = messageInput.value.trim()
   
   if (username && message){
@@ -189,6 +193,7 @@ chatForm.addEventListener("submit", async (event) => {
     try {
       await addDoc(messageCollection, {
         username: username, 
+        idBrowser: idBrowserSekarang, 
         message: message, 
         waktu: serverTimestamp()
       })
@@ -217,25 +222,42 @@ onSnapshot(queryPesan, (snapshot) => {
       {hour: '2-digit', minute: '2-digit'}
     )
     
+    //tentuman apakah diri sendiri atau bukan
+    const sendiri = data.idBrowser === idBrowserSekarang
+    
     //render pesan (memanggil fungsi renderPesan)
-    renderPesan(data.username,data.message, waktu)
+    renderPesan(data.username, data.message, waktu, data.tipe, sendiri)
   }) 
   //scrool chatBox ke bawah setiap kali ada pedan baru 
   chatBox.scrollTop = chatBox.scrollHeight
 }) 
 
-function renderPesan(username, message, waktu){
+function renderPesan(username, message, waktu, tipe = "teks", diriSendiri = false){
   //membuat elemen untuk menampilkan pesan
   const messageDiv = document.createElement("div")
   
   //mmenambak nama class meesseg-card ke elemen messageDiv
   messageDiv.classList.add("message-card")
   
+  //jima diri sendiri, tambahkan class my-message
+  if (diriSendiri) messageDiv.classList.add("my-message")
+    
+
+  
   const warnaUser = stringToColor(username)
+   
+   let isiPesan
+  
+  // jika tipe pesan adalah stiker, tampilan gambar 
+  if (tipe==="stiker"){
+    isiPesan=`<img src="${message}" alt="stiker" class="stiker"/>`
+  }else{
+    // kalau bukan stiker 
+    isiPesan=`<span>${message}</span>`
+  }
   
   //menambahkan konten pesan ke messageDiv
   messageDiv.innerHTML = `
-  
   <div class="message-content">
      <strong style="color: ${warnaUser}">${username}</strong>
      <span>${message}</span>
