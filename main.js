@@ -24,7 +24,7 @@ const firebaseConfig = {
   appId: "1:524778921414:web:095b9f8ab73bd49e84e6c7"
 }
 
- // 3. Inisialisasi Firebase dan Firestore
+// 3. Inisialisasi Firebase dan Firestore
 const app = initializeApp(firebaseConfig)
 const db = getFirestore(app)
 const messagesCollection = collection(db, "messages")
@@ -33,14 +33,6 @@ const messagesCollection = collection(db, "messages")
 function ambilAtauBuatIdBrowser() {
     // buat satu variabel utk menyimpan browser id
     let idBrowser = localStorage.getItem("livechatpunyaku123")
-    
- // Suara notifikasi
-const suaraNotifikasi = new Audio("noti.mp3")
-
-// Agar browser mengizinkan suara setelah user berinteraksi
-document.addEventListener("click", () => {
-    suaraNotifikasi.load()
-}, { once: true })
 
     // periksa isi variabel browser id
     // jika variabel tersebut tidak ada isinya
@@ -57,6 +49,10 @@ document.addEventListener("click", () => {
 
 // simpan id browser pengguna saat ini ke variabel
 const idBrowserSekarang = ambilAtauBuatIdBrowser()
+
+// 🔊 Suara notifikasi pesan masuk
+const suaraPesanMasuk = new Audio("notifikasipesan.mp3")
+let pertamaKali = true
 
 // ambil nama user yg sudah pernah disimpan di local storage
 const usernameTersimpan = localStorage.getItem("livechat_username") || ""
@@ -117,8 +113,10 @@ if (usernameTersimpan) {
 daftarStiker.forEach((url) => {
     // buat elemen img untuk setiap stiker
     const img = document.createElement("img")
+
     // menentukan sumber gambar stiker dari url
     img.src = url
+
     // menambah nama class pilihan-stiker
     img.classList.add("pilihan-stiker")
 
@@ -153,6 +151,7 @@ function dapatkanDanKunciUsername() {
         // pemeriksaan kalau username masih kosong, tampilkan alert
         if (!username) {
             alert("Username tidak boleh kosong!")
+            return ""
         }
 
         // simpan username ke local storage
@@ -211,69 +210,52 @@ chatForm.addEventListener("submit", async (event) => {
                 message: message,
                 waktu: serverTimestamp()
             })
+
             // bersihkan input setelah mengirim pesan
             messageInput.value = ""
         } catch (error) {
             console.log("Gagal mengirim pesan:", error)
         }
     }
-    
 })
 
 // Fitur Pesan Listener (Realtime)
 const queryPesan = query(messagesCollection, orderBy("waktu", "asc"))
 
- let jumlahPesanSebelumnya = 0
- 
- let pesanTerakhir = null
-
 onSnapshot(queryPesan, (cuplikan) => {
+    // Bersihkan chatBox sebelum menampilkan pesan baru
     chatBox.innerHTML = ""
 
-    const jumlahPesanSekarang = cuplikan.size
-
+    // tampilkan pesan baru di chatBox
     cuplikan.forEach((doc) => {
+        // ambil data dari dokumen
         const data = doc.data()
 
-        const waktu = data.waktu
-            ? data.waktu.toDate().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit"
-            })
-            : ""
+        // membuat tampilan waktu
+        const waktu = data.waktu.toDate().toLocaleTimeString(
+            [],
+            { hour: '2-digit', minute: '2-digit' }
+        )
 
+        // tentukan apakah diri sendiri atau bukan
         const sendiri = data.idBrowser === idBrowserSekarang
 
-        renderPesan(
-            data.username,
-            data.message,
-            waktu,
-            data.tipe,
-            sendiri
-        )
+        // render pesan (memanggil fungsi renderPesan)
+        renderPesan(data.username, data.message, waktu, data.tipe, sendiri)
+
+        // 🔊 bunyi jika ada pesan baru dari orang lain
+        if (!pertamaKali && !sendiri) {
+            suaraPesanMasuk.currentTime = 0
+            suaraPesanMasuk.play()
+        }
     })
 
-    // Jika jumlah pesan bertambah
-    if (
-        jumlahPesanSebelumnya > 0 &&
-        jumlahPesanSekarang > jumlahPesanSebelumnya
-    ) {
-        const pesanTerakhir = cuplikan.docs[cuplikan.docs.length - 1].data()
+    // setelah pertama kali memuat pesan, ubah menjadi false
+    pertamaKali = false
 
-        // Hanya beri notifikasi jika dari orang lain
-        if (pesanTerakhir.idBrowser !== idBrowserSekarang) {
-            tampilNotifikasi(
-                "💬 " + pesanTerakhir.username + " mengirim pesan"
-            )
-        }
-    }
-
-    jumlahPesanSebelumnya = jumlahPesanSekarang
-
-    chatBox.scrollTop = chatBox.scrollHeight
-})
     // scroll chatBox ke bawah setiap kali ada pesan baru
     chatBox.scrollTop = chatBox.scrollHeight
+})
 
 function renderPesan(username, message, waktu, tipe = "teks", diriSendiri = false) {
     // buat elemen untuk menampilkan pesan
@@ -305,7 +287,7 @@ function renderPesan(username, message, waktu, tipe = "teks", diriSendiri = fals
             ${isiPesan}
         </div>
         <span class="time">${waktu}</span>
-    ` // backtick
+    `
 
     // menambahkan messageDiv ke chatBox
     chatBox.appendChild(messageDiv)
@@ -314,27 +296,14 @@ function renderPesan(username, message, waktu, tipe = "teks", diriSendiri = fals
 // Fungsi untuk mengubah String Nama menjadi Warna (HSL) yang konsisten
 function stringToColor(str) {
     let hash = 0
+
     for (let i = 0; i < str.length; i++) {
         hash = str.charCodeAt(i) + ((hash << 5) - hash)
     }
-    // Ambil nilai Hue 0 - 360, dengan saturation 65% & Lightness 40% agar warna tetap kontras/jelas
+
+    // Ambil nilai Hue 0 - 360, dengan saturation 65% & Lightness 40%
+    // agar warna tetap kontras/jelas
     const hue = Math.abs(hash) % 360
+
     return `hsl(${hue}, 65%, 40%)`
-}
-
-function tampilNotifikasi(pesan) {
-    const notif = document.createElement("div")
-
-    notif.className = "notifikasi-chat"
-
-    notif.innerHTML = `
-        <strong>🔔 Pesan Baru</strong>
-        <div>${pesan}</div>
-    `
-
-    document.body.appendChild(notif)
-
-    setTimeout(() => {
-        notif.remove()
-    }, 3000)
 }
