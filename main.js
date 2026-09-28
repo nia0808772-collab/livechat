@@ -34,8 +34,13 @@ function ambilAtauBuatIdBrowser() {
     // buat satu variabel utk menyimpan browser id
     let idBrowser = localStorage.getItem("livechatpunyaku123")
     
-        // Siapkan suara notifikasi
-    const suaraPostinganBaru = new Audio("noti.mp3")
+ // Suara notifikasi
+const suaraNotifikasi = new Audio("noti.mp3")
+
+// Agar browser mengizinkan suara setelah user berinteraksi
+document.addEventListener("click", () => {
+    suaraNotifikasi.load()
+}, { once: true })
 
     // periksa isi variabel browser id
     // jika variabel tersebut tidak ada isinya
