@@ -224,6 +224,8 @@ chatForm.addEventListener("submit", async (event) => {
 const queryPesan = query(messagesCollection, orderBy("waktu", "asc"))
 
  let jumlahPesanSebelumnya = 0
+ 
+ let pesanTerakhir = null
 
 onSnapshot(queryPesan, (cuplikan) => {
     chatBox.innerHTML = ""
