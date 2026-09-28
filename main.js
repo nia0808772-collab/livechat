@@ -223,31 +223,55 @@ chatForm.addEventListener("submit", async (event) => {
 // Fitur Pesan Listener (Realtime)
 const queryPesan = query(messagesCollection, orderBy("waktu", "asc"))
 
- onSnapshot(queryPesan, (cuplikan) => {
-    // Bersihkan chatBox sebelum menampilkan pesan baru
+ let jumlahPesanSebelumnya = 0
+
+onSnapshot(queryPesan, (cuplikan) => {
     chatBox.innerHTML = ""
 
-    // tampilkan pesan baru di chatBox
+    const jumlahPesanSekarang = cuplikan.size
+
     cuplikan.forEach((doc) => {
-        // ambil data dari dokumen
         const data = doc.data()
 
-        // membuat tampilan waktu
-        const waktu = data.waktu.toDate().toLocaleTimeString(
-            [],
-            { hour: '2-digit', minute: '2-digit' }
-        )
+        const waktu = data.waktu
+            ? data.waktu.toDate().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit"
+            })
+            : ""
 
-        // tentukan apakah diri sendiri atau bukan
         const sendiri = data.idBrowser === idBrowserSekarang
 
-        // render pesan (memanggil fungsi renderPesan)
-        renderPesan(data.username, data.message, waktu, data.tipe, sendiri)
+        renderPesan(
+            data.username,
+            data.message,
+            waktu,
+            data.tipe,
+            sendiri
+        )
     })
 
-    // scroll chatBox ke bawah setiap kali ada pesan baru
+    // Jika jumlah pesan bertambah
+    if (
+        jumlahPesanSebelumnya > 0 &&
+        jumlahPesanSekarang > jumlahPesanSebelumnya
+    ) {
+        const pesanTerakhir = cuplikan.docs[cuplikan.docs.length - 1].data()
+
+        // Hanya beri notifikasi jika dari orang lain
+        if (pesanTerakhir.idBrowser !== idBrowserSekarang) {
+            tampilNotifikasi(
+                "💬 " + pesanTerakhir.username + " mengirim pesan"
+            )
+        }
+    }
+
+    jumlahPesanSebelumnya = jumlahPesanSekarang
+
     chatBox.scrollTop = chatBox.scrollHeight
 })
+    // scroll chatBox ke bawah setiap kali ada pesan baru
+    chatBox.scrollTop = chatBox.scrollHeight
 
 function renderPesan(username, message, waktu, tipe = "teks", diriSendiri = false) {
     // buat elemen untuk menampilkan pesan
@@ -297,15 +321,12 @@ function stringToColor(str) {
 }
 
 function tampilNotifikasi(pesan) {
-    // Hapus notifikasi lama
-    const lama = document.querySelector(".notifikasi-chat")
-    if (lama) lama.remove()
-
     const notif = document.createElement("div")
+
     notif.className = "notifikasi-chat"
 
     notif.innerHTML = `
-        <strong>💬 Pesan Baru</strong>
+        <strong>🔔 Pesan Baru</strong>
         <div>${pesan}</div>
     `
 
