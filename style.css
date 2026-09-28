@@ -30,7 +30,7 @@ body {
 }
 
 .chat-header {
-  background: #B294FF;
+  background: #E79ACA;
   color: white;
   padding: 12px 15px;
   text-align: center;
@@ -116,9 +116,60 @@ body {
 
 .chat-form button {
   padding: 8px 15px;
-  background: #007bff;
+  background: #E1B4D8;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+}
+
+/* Panel Pop-up Galeri Stiker */
+.pemilih-stiker {
+  background: #ffffff;
+  border-top: 1px solid #ddd;
+  padding: 8px;
+  max-height: 100px;
+  overflow-y: auto;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.pemilih-stiker.tersembunyi{
+  display: none; /*cara menyembunyikan elemen*/
+}
+
+.daftar-stiker {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 5px;
+}
+
+.pilihan-stiker {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: transform 0.1s;
+}
+
+.pilihan-stiker:hover {
+  transform: scale(1.15);
+}
+
+/* Tombol Ikon Stiker */
+.tombol-stiker {
+  background: none;
+  border: none;
+  font-size: 1em;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+
+/* Tampilan Gambar Stiker dalam Chat Bubble */
+.stiker {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  display: block;
+  margin-top: 4px;
 }
